@@ -23,6 +23,7 @@ export async function POST(req: Request) {
     messages: await convertToModelMessages(messages),
     tools: {
       ...frontendTools(tools ?? {}),
+      web_seach: openai.tools.webSearch(),
     },
     ...(system === undefined ? {} : { system }),
   });

@@ -19,6 +19,8 @@
     "@openuidev/react-headless": "^0.9.13",
     "@openuidev/react-lang": "^0.2.15",
     "@openuidev/react-ui": "^0.13.10",
+    "@supabase/ssr": "^0.12.5",
+    "@supabase/supabase-js": "^2.112.4",
     "ai": "^7.0.84",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

@@ -9,7 +9,7 @@ export async function GET(request: Request) {
 
     if (!code) { 
         return NextResponse.redirect(
-            new URL("/?auth=error=missing_code", requestUrl.origin),
+            new URL("/?auth_error=missing_code", requestUrl.origin),
         );
     }
 

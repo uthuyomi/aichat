@@ -1,6 +1,7 @@
 import type * as React from "react";
 import { MessagesSquare } from "lucide-react";
-import { GitHubIcon } from "@/components/github";
+
+import { SidebarAccount } from "@/components/sidebar-account";
 import {
   Sidebar,
   SidebarContent,
@@ -50,30 +51,7 @@ export function ThreadListSidebar({
       </SidebarContent>
       {props.collapsible !== "none" && <SidebarRail />}
       <SidebarFooter className="aui-sidebar-footer border-t">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              size="lg"
-              render={
-                <a
-                  href="https://github.com/assistant-ui/assistant-ui"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                />
-              }
-            >
-              <div className="aui-sidebar-footer-icon-wrapper bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                <GitHubIcon className="aui-sidebar-footer-icon size-4" />
-              </div>
-              <div className="aui-sidebar-footer-heading flex flex-col gap-0.5 leading-none">
-                <span className="aui-sidebar-footer-title font-semibold">
-                  GitHub
-                </span>
-                <span>View Source</span>
-              </div>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <SidebarAccount />
       </SidebarFooter>
     </Sidebar>
   );

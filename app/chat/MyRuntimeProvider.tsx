@@ -1,11 +1,11 @@
 "use client";
 
-import { AssistantRuntimeProvider, AuiConfig, Tools, useAssistantInstructions } from "@assistant-ui/react";
+import { AssistantRuntimeProvider, AuiConfig, Tools, useAssistantInstructions, useRemoteThreadListRuntime } from "@assistant-ui/react";
+import { threadListAdapter } from "@/lib/assistant/thread-list-adapter";
 import { useChatRuntime } from "@assistant-ui/ai-sdk";
 import { createOpenUIIntegration } from "@openuidev/assistant-ui";
 import { shouldContinueAfterOpenUIPrompt } from "@openuidev/assistant-ui/ai-sdk";
 import type { ReactNode } from "react";
-import { OpenAIImageModel } from "@ai-sdk/openai/internal";
 
 const openuiIntegration = createOpenUIIntegration({
   additionalRules: [
@@ -20,16 +20,23 @@ const openuiIntegration = createOpenUIIntegration({
 function OpenUIInstructions() {
     useAssistantInstructions(openuiIntegration.instructions);
     return null;
- }
+}
+
+function useChatRuntimeWithOpenUI() { 
+  return useChatRuntime({
+    sendAutomaticallyWhen: shouldContinueAfterOpenUIPrompt,
+  });
+}
 
 type Props = {
     children: ReactNode;
 };
 
 export default function MyRuntimeProvider({ children }: Props) { 
-    const runtime = useChatRuntime({
-        sendAutomaticallyWhen: shouldContinueAfterOpenUIPrompt,
-    });
+  const runtime = useRemoteThreadListRuntime({
+    runtimeHook: useChatRuntimeWithOpenUI,
+    adapter: threadListAdapter,
+  });
 
     const config = AuiConfig({
       tools: Tools({

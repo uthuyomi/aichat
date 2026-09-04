@@ -3,7 +3,9 @@
 import {
   AssistantRuntimeProvider,
   AuiConfig,
+  AuiProvider,
   Tools,
+  useAui,
   useAssistantInstructions,
   useRemoteThreadListRuntime,
   useRuntimeAdapters,
@@ -47,11 +49,8 @@ function useChatRuntimeWithOpenUI() {
   });
 }
 
-export default function MyRuntimeProvider({ children }: Props) {
-  const runtime = useRemoteThreadListRuntime({
-    runtimeHook: useChatRuntimeWithOpenUI,
-    adapter: threadListAdapter,
-  });
+function OpenUIConfigProvider({ children }: Props) {
+  const aui = useAui();
 
   const config = AuiConfig({
     tools: Tools({
@@ -60,10 +59,23 @@ export default function MyRuntimeProvider({ children }: Props) {
   });
 
   return (
-    <AssistantRuntimeProvider runtime={runtime} config={config}>
+    <AuiProvider extends={aui} config={config}>
       <OpenUIInstructions />
 
       {children}
+    </AuiProvider>
+  );
+}
+
+export default function MyRuntimeProvider({ children }: Props) {
+  const runtime = useRemoteThreadListRuntime({
+    runtimeHook: useChatRuntimeWithOpenUI,
+    adapter: threadListAdapter,
+  });
+
+  return (
+    <AssistantRuntimeProvider runtime={runtime}>
+      <OpenUIConfigProvider>{children}</OpenUIConfigProvider>
     </AssistantRuntimeProvider>
   );
 }

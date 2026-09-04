@@ -359,6 +359,14 @@ const AssistantMessage: FC = () => {
               case "reasoning":
                 return <Reasoning {...part} />;
               case "tool-call":
+                console.log("[tool-call]", {
+                  toolName: part.toolName,
+                  toolCallId: part.toolCallId,
+                  hasToolUI: !!part.toolUI,
+                  status: part.status,
+                  args: part.args,
+                });
+
                 return part.toolUI ?? <ToolFallbackComponent {...part} />;
               case "data":
                 return part.dataRendererUI;

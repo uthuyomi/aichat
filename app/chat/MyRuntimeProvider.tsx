@@ -8,6 +8,7 @@ import {
   useRemoteThreadListRuntime,
   useRuntimeAdapters,
 } from "@assistant-ui/react";
+
 import { threadListAdapter } from "@/lib/assistant/thread-list-adapter";
 import { useChatRuntime } from "@assistant-ui/ai-sdk";
 import { createOpenUIIntegration } from "@openuidev/assistant-ui";
@@ -24,12 +25,20 @@ const openuiIntegration = createOpenUIIntegration({
   ],
 });
 
+console.log("[openui] toolNames:", openuiIntegration.toolNames);
+console.log("[openui] toolkit:", openuiIntegration.toolkit);
+
+type Props = {
+  children: ReactNode;
+};
+
 function OpenUIInstructions() {
-    useAssistantInstructions(openuiIntegration.instructions);
-    return null;
+  useAssistantInstructions(openuiIntegration.instructions);
+
+  return null;
 }
 
-function useChatRuntimeWithOpenUI() { 
+function useChatRuntimeWithOpenUI() {
   const adapters = useRuntimeAdapters();
 
   return useChatRuntime({
@@ -38,26 +47,23 @@ function useChatRuntimeWithOpenUI() {
   });
 }
 
-type Props = {
-    children: ReactNode;
-};
-
-export default function MyRuntimeProvider({ children }: Props) { 
+export default function MyRuntimeProvider({ children }: Props) {
   const runtime = useRemoteThreadListRuntime({
     runtimeHook: useChatRuntimeWithOpenUI,
     adapter: threadListAdapter,
   });
 
-    const config = AuiConfig({
-      tools: Tools({
-        toolkit: openuiIntegration.toolkit,
-      }),
-    });
+  const config = AuiConfig({
+    tools: Tools({
+      toolkit: openuiIntegration.toolkit,
+    }),
+  });
 
-    return (
-        <AssistantRuntimeProvider runtime={runtime} config={config}>
-            <OpenUIInstructions />
-            {children}
-        </AssistantRuntimeProvider>
-    )
+  return (
+    <AssistantRuntimeProvider runtime={runtime} config={config}>
+      <OpenUIInstructions />
+
+      {children}
+    </AssistantRuntimeProvider>
+  );
 }

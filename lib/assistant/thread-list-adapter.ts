@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import type { RemoteThreadListAdapter } from "@assistant-ui/react";
 import { useThreadHistoryAdapter } from "./thread-history-adapter";
+import { createAssistantStream } from "assistant-stream";
 
 type ThreadRow = {
   id: string;
@@ -18,15 +19,15 @@ function toThreadMetadata(thread: ThreadRow) {
   };
 }
 
-function useThreadListAdapters() { 
-    const history = useThreadHistoryAdapter();
+function useThreadListAdapters() {
+  const history = useThreadHistoryAdapter();
 
-    return useMemo(
-        () => ({
-            history,
-        }),
-        [history],
-    )
+  return useMemo(
+    () => ({
+      history,
+    }),
+    [history],
+  );
 }
 
 export const threadListAdapter: RemoteThreadListAdapter = {
@@ -119,23 +120,65 @@ export const threadListAdapter: RemoteThreadListAdapter = {
   },
 
   async fetch(remoteId) {
-      const response = await fetch(
-          `/api/threads/${remoteId}`
-      );
+    const response = await fetch(`/api/threads/${remoteId}`);
 
-      if (!response.ok) { 
-        throw new Error("Failed to fetch thread");
-      }
+    if (!response.ok) {
+      throw new Error("Failed to fetch thread");
+    }
 
-      const { thread }: { thread: ThreadRow } =
-          await response.json();
+    const { thread }: { thread: ThreadRow } = await response.json();
 
-          return toThreadMetadata(thread);
+    return toThreadMetadata(thread);
   },
 
-  async generateTitle() {
-    throw new Error("Title generation is not implemented yet");
-    },
+  async generateTitle(remoteId, unstable_messages) {
+    const text = unstable_messages
+      .map((message) =>
+        message.content
+          .filter((part) => part.type === "text")
+          .map((part) => part.text)
+          .join(""),
+      )
+      .filter(Boolean)
+      .join("\n");
 
-    unstable_useAdapters: useThreadListAdapters,
+    return createAssistantStream(async (controller) => {
+      const response = await fetch(`/api/threads/${remoteId}/title`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate title");
+      }
+
+      const { title }: { title: string } = await response.json();
+
+      controller.enqueue({
+        type: "part-start",
+        path: [0],
+        part: {
+          type: "text",
+        },
+      });
+
+      controller.enqueue({
+        type: "text-delta",
+        path: [0],
+        textDelta: title,
+      });
+
+      controller.enqueue({
+        type: "part-finish",
+        path: [0],
+      });
+    });
+  },
+
+  unstable_useAdapters: useThreadListAdapters,
 };

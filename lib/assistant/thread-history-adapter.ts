@@ -13,101 +13,140 @@ import type {
 export function useThreadHistoryAdapter(): ThreadHistoryAdapter {
   const aui = useAui();
 
-  return useMemo(() => ({
-    async load() {
-      throw new Error(
-        "Direct ThreadHistoryAdapter.load() is not supported. Use withFormat().",
-      );
-    },
+  console.log("[history] hook created");
 
-    async append() {
-      throw new Error(
-        "Direct ThreadHistoryAdapter.append() is not supported. Use withFormat().",
-      );
-    },
+  return useMemo(
+    () => ({
+      async load() {
+        console.log("[history] direct load called");
 
-    withFormat<TMessage, TStorageFormat extends Record<string, unknown>>(
-      formatAdapter: MessageFormatAdapter<TMessage, TStorageFormat>,
-    ) {
-      return {
-        async load(): Promise<MessageFormatRepository<TMessage>> {
-          const remoteId = aui.threadListItem.getState().remoteId;
+        throw new Error(
+          "Direct ThreadHistoryAdapter.load() is not supported. Use withFormat().",
+        );
+      },
 
-          if (!remoteId) {
+      async append() {
+        console.log("[history] direct append called");
+
+        throw new Error(
+          "Direct ThreadHistoryAdapter.append() is not supported. Use withFormat().",
+        );
+      },
+
+      withFormat<TMessage, TStorageFormat extends Record<string, unknown>>(
+        formatAdapter: MessageFormatAdapter<TMessage, TStorageFormat>,
+      ) {
+        console.log("[history] withFormat called", formatAdapter.format);
+
+        return {
+          async load(): Promise<MessageFormatRepository<TMessage>> {
+            console.log("[history] formatted load called");
+
+            const remoteId = aui.threadListItem.getState().remoteId;
+
+            console.log("[history] load remoteId:", remoteId);
+
+            if (!remoteId) {
+              return {
+                messages: [],
+              };
+            }
+
+            const response = await fetch(`/api/threads/${remoteId}/messages`);
+
+            if (!response.ok) {
+              throw new Error("Failed to load messages");
+            }
+
+            const rows: MessageStorageEntry<TStorageFormat>[] =
+              await response.json();
+
+            console.log("[history] loaded message rows:", rows.length);
+
+            const messages = rows.map((row) => formatAdapter.decode(row));
+
             return {
-              messages: [],
+              messages,
             };
-          }
+          },
 
-          const response = await fetch(`/api/threads/${remoteId}/messages`);
+          async append(item: MessageFormatItem<TMessage>): Promise<void> {
+            console.log("[history] formatted append called");
 
-          if (!response.ok) {
-            throw new Error("Failed to load messages");
-          }
+            const { remoteId } = await aui.threadListItem.initialize();
 
-          const rows: MessageStorageEntry<TStorageFormat>[] =
-            await response.json();
+            console.log("[history] append remoteId:", remoteId);
 
-          const messages = rows.map((row) => formatAdapter.decode(row));
+            const content = formatAdapter.encode(item);
 
-          return {
-            messages,
-          };
-        },
+            const messageId = formatAdapter.getId(item.message);
 
-        async append(item: MessageFormatItem<TMessage>): Promise<void> {
-          const { remoteId } = await aui.threadListItem.initialize();
+            console.log("[history] append messageId:", messageId);
 
-          const content = formatAdapter.encode(item);
+            const response = await fetch(`/api/threads/${remoteId}/messages`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                id: messageId,
+                parent_id: item.parentId,
+                format: formatAdapter.format,
+                content,
+              }),
+            });
 
-          const response = await fetch(`/api/threads/${remoteId}/messages`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              id: formatAdapter.getId(item.message),
-              parent_id: item.parentId,
-              format: formatAdapter.format,
-              content,
-            }),
-          });
+            console.log("[history] append response:", response.status);
 
-          if (!response.ok) {
-            throw new Error("Failed to save message");
-          }
-        },
+            if (!response.ok) {
+              throw new Error("Failed to save message");
+            }
+          },
 
-        async update(
-          item: MessageFormatItem<TMessage>,
-          _localMessageId: string,
-        ): Promise<void> {
-          const remoteId = aui.threadListItem.getState().remoteId;
+          async update(
+            item: MessageFormatItem<TMessage>,
+            _localMessageId: string,
+          ): Promise<void> {
+            console.log("[history] formatted update called");
 
-          if (!remoteId) {
-            return;
-          }
+            const remoteId = aui.threadListItem.getState().remoteId;
 
-          const content = formatAdapter.encode(item);
+            console.log("[history] update remoteId:", remoteId);
 
-          const response = await fetch(`/api/threads/${remoteId}/messages`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              id: formatAdapter.getId(item.message),
-              parent_id: item.parentId,
-              format: formatAdapter.format,
-              content,
-            }),
-          });
+            if (!remoteId) {
+              console.log("[history] update skipped: no remoteId");
 
-          if (!response.ok) {
-            throw new Error("Failed to update message");
-          }
-        },
-      };
-    },
-  }), [aui]);
+              return;
+            }
+
+            const content = formatAdapter.encode(item);
+
+            const messageId = formatAdapter.getId(item.message);
+
+            console.log("[history] update messageId:", messageId);
+
+            const response = await fetch(`/api/threads/${remoteId}/messages`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                id: messageId,
+                parent_id: item.parentId,
+                format: formatAdapter.format,
+                content,
+              }),
+            });
+
+            console.log("[history] update response:", response.status);
+
+            if (!response.ok) {
+              throw new Error("Failed to update message");
+            }
+          },
+        };
+      },
+    }),
+    [aui],
+  );
 }

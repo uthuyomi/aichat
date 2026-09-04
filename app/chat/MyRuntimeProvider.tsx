@@ -1,6 +1,13 @@
 "use client";
 
-import { AssistantRuntimeProvider, AuiConfig, Tools, useAssistantInstructions, useRemoteThreadListRuntime } from "@assistant-ui/react";
+import {
+  AssistantRuntimeProvider,
+  AuiConfig,
+  Tools,
+  useAssistantInstructions,
+  useRemoteThreadListRuntime,
+  useRuntimeAdapters,
+} from "@assistant-ui/react";
 import { threadListAdapter } from "@/lib/assistant/thread-list-adapter";
 import { useChatRuntime } from "@assistant-ui/ai-sdk";
 import { createOpenUIIntegration } from "@openuidev/assistant-ui";
@@ -23,7 +30,10 @@ function OpenUIInstructions() {
 }
 
 function useChatRuntimeWithOpenUI() { 
+  const adapters = useRuntimeAdapters();
+
   return useChatRuntime({
+    adapters: adapters ?? undefined,
     sendAutomaticallyWhen: shouldContinueAfterOpenUIPrompt,
   });
 }

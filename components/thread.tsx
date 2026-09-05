@@ -144,7 +144,7 @@ const ThreadRoot: FC<{ isEmpty: boolean }> = ({ isEmpty }) => {
 
   return (
     <ThreadPrimitive.Root
-      className="aui-root aui-thread-root bg-background @container flex h-full flex-col"
+      className="aui-root aui-thread-root bg-background @container flex h-full min-h-0 flex-col overflow-hidden"
       style={{
         ["--thread-max-width" as string]: "44rem",
         ["--composer-bg" as string]: "var(--color-card)",
@@ -153,9 +153,9 @@ const ThreadRoot: FC<{ isEmpty: boolean }> = ({ isEmpty }) => {
       }}
     >
       <ThreadPrimitive.Viewport
-        turnAnchor="top"
+        turnAnchor="bottom"
         data-slot="aui_thread-viewport"
-        className="relative flex flex-1 flex-col overflow-x-auto overflow-y-scroll scroll-smooth"
+        className="relative flex min-h-0 flex-1 flex-col overflow-x-auto overflow-y-scroll scroll-smooth"
       >
         <div
           className={cn(
@@ -181,7 +181,7 @@ const ThreadRoot: FC<{ isEmpty: boolean }> = ({ isEmpty }) => {
 
           <ThreadPrimitive.ViewportFooter
             className={cn(
-              "aui-thread-viewport-footer bg-background flex flex-col gap-4 overflow-visible pb-4 md:pb-6",
+              "aui-thread-viewport-footer bg-background z-10 flex shrink-0 flex-col gap-4 overflow-visible pb-4 md:pb-6",
               !isEmpty &&
                 "sticky bottom-0 mt-auto rounded-t-(--composer-radius)",
             )}
